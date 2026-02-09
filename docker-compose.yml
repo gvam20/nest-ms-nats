@@ -1,0 +1,115 @@
+version: "3.9"
+
+services:
+  # NATS: broker de mensajería
+  nats-server:
+    image: nats:2.12.4-alpine3.22
+    ports:
+      - 8222:8222
+      - 4222:4222
+    restart: unless-stopped
+
+  # Base de datos para orders
+  #orders_db:
+  #  image: postgres:16.11-alpine3.22
+  #  environment:
+  #    - POSTGRES_USER=${POSTGRES_USER}
+  #    - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+  #    - POSTGRES_DB=${POSTGRES_DB}
+  #  volumes:
+  #    - ./orders/orders_db:/var/lib/postgresql/data
+  #  ports:
+  #    - 5432:5432
+  #  restart: unless-stopped
+
+  # Microservicio de productos
+  #products:
+  #  build: ./products
+  #  command: npm run start:dev
+  #  ports:
+  #    - 3001:3001
+  #  volumes:
+  #    - ./products/src:/usr/src/app/src
+  #  environment:
+  #    - PORT=${PORT_PRODUCTS}
+  #    - DATABASE_URL=${DATABASE_URL}
+  #    - NATS_SERVER=${NATS_SERVER}
+  #  depends_on:
+  #    - orders_db
+  #    - nats-server
+  #  restart: unless-stopped
+
+  # Microservicio de orders
+  #orders:
+  #  build: ./orders
+  #  command: npm run start:dev
+  #  ports:
+  #    - 3002:3002
+  #  volumes:
+  #    - ./orders/src:/usr/src/app/src
+  #  environment:
+  #    - PORT=${PORT_ORDERS}
+  #    - PRODUCTS_MICROSERVICE_HOST=${PRODUCTS_MICROSERVICE_HOST}
+  #    - PRODUCTS_MICROSERVICE_PORT=${PRODUCTS_MICROSERVICE_PORT}
+  #    - DATABASE_URL=${DB_ORDER}
+  #    - NATS_SERVER=${NATS_SERVER}
+  #  depends_on:
+  #    - orders_db
+  #    - nats-server
+  #    - products
+  #  restart: unless-stopped
+
+  # API Gateway
+  gateway:
+    build: ./gateway
+    command: npm run start:dev
+    ports:
+      - 3000:3000
+    volumes:
+      - ./gateway/src:/usr/src/app/src
+    environment:
+      - PORT=${PORT_GATEWAY}
+      - PRODUCTS_MICROSERVICE_HOST=${PRODUCTS_MICROSERVICE_HOST}
+      - PRODUCTS_MICROSERVICE_PORT=${PRODUCTS_MICROSERVICE_PORT}
+      - ORDERS_MICROSERVICE_HOST=${ORDERS_MICROSERVICE_HOST}
+      - ORDERS_MICROSERVICE_PORT=${ORDERS_MICROSERVICE_PORT}
+      - NATS_SERVER=${NATS_SERVER}
+    depends_on:
+      #- orders
+      #- products
+      - nats-server
+    restart: unless-stopped
+
+  #payments:
+  #  build: ./payments
+  #  command: npm run start:dev
+  #  ports:
+  #    - 3003:3003
+  #  volumes:
+  #    - ./payments/src:/usr/src/app/src
+  #  environment:
+  #    - PORT=${PORT_PAYMENT}
+  #    - STRIPE_KEY=${STRIPE_KEY}
+  #    - NATS_SERVER=${NATS_SERVER}
+  #  depends_on:
+  #    - nats-server
+  #  restart: unless-stopped
+
+  auth:
+    build: ./auth
+    command: npm run start:dev
+    ports:
+      - 3010:3010
+    volumes:
+      - ./auth/src:/usr/src/app/src
+    environment:
+      - PORT=${PORT_AUTH}
+      - NATS_SERVER=${NATS_SERVER}
+      - MONGO_DB=${MONGO_DB}
+      - PRODUCTS_MICROSERVICE_HOST=${PRODUCTS_MICROSERVICE_HOST}
+      - PRODUCTS_MICROSERVICE_PORT=${PRODUCTS_MICROSERVICE_PORT}
+      - ORDERS_MICROSERVICE_HOST=${ORDERS_MICROSERVICE_HOST}
+      - ORDERS_MICROSERVICE_PORT=${ORDERS_MICROSERVICE_PORT}
+    depends_on:
+      - nats-server
+    restart: unless-stopped
