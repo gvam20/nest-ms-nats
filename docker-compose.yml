@@ -10,54 +10,56 @@ services:
     restart: unless-stopped
 
   # Base de datos para orders
-  #orders_db:
-  #  image: postgres:16.11-alpine3.22
-  #  environment:
-  #    - POSTGRES_USER=${POSTGRES_USER}
-  #    - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-  #    - POSTGRES_DB=${POSTGRES_DB}
-  #  volumes:
-  #    - ./orders/orders_db:/var/lib/postgresql/data
-  #  ports:
-  #    - 5432:5432
-  #  restart: unless-stopped
+  orders_db:
+    image: postgres:16.11-alpine3.22
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      - ./orders/orders_db:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    restart: unless-stopped
 
   # Microservicio de productos
-  #products:
-  #  build: ./products
-  #  command: npm run start:dev
-  #  ports:
-  #    - 3001:3001
-  #  volumes:
-  #    - ./products/src:/usr/src/app/src
-  #  environment:
-  #    - PORT=${PORT_PRODUCTS}
-  #    - DATABASE_URL=${DATABASE_URL}
-  #    - NATS_SERVER=${NATS_SERVER}
-  #  depends_on:
-  #    - orders_db
-  #    - nats-server
-  #  restart: unless-stopped
+  products:
+    build: ./products
+    command: npm run start:dev
+    ports:
+      - 3001:3001
+    volumes:
+      - ./products:/usr/src/app
+      - /usr/src/app/node_modules
+    environment:
+      - PORT=${PORT_PRODUCTS}
+      - DATABASE_URL=${DATABASE_URL}
+      - NATS_SERVER=${NATS_SERVER}
+    depends_on:
+      - orders_db
+      - nats-server
+    restart: unless-stopped
 
   # Microservicio de orders
-  #orders:
-  #  build: ./orders
-  #  command: npm run start:dev
-  #  ports:
-  #    - 3002:3002
-  #  volumes:
-  #    - ./orders/src:/usr/src/app/src
-  #  environment:
-  #    - PORT=${PORT_ORDERS}
-  #    - PRODUCTS_MICROSERVICE_HOST=${PRODUCTS_MICROSERVICE_HOST}
-  #    - PRODUCTS_MICROSERVICE_PORT=${PRODUCTS_MICROSERVICE_PORT}
-  #    - DATABASE_URL=${DB_ORDER}
-  #    - NATS_SERVER=${NATS_SERVER}
-  #  depends_on:
-  #    - orders_db
-  #    - nats-server
-  #    - products
-  #  restart: unless-stopped
+  orders:
+    build: ./orders
+    command: npm run start:dev
+    ports:
+      - 3002:3002
+    volumes:
+      - ./orders:/usr/src/app
+      - /usr/src/app/node_modules
+    environment:
+      - PORT=${PORT_ORDERS}
+      - PRODUCTS_MICROSERVICE_HOST=${PRODUCTS_MICROSERVICE_HOST}
+      - PRODUCTS_MICROSERVICE_PORT=${PRODUCTS_MICROSERVICE_PORT}
+      - DATABASE_URL=${DB_ORDER}
+      - NATS_SERVER=${NATS_SERVER}
+    depends_on:
+      - orders_db
+      - nats-server
+      - products
+    restart: unless-stopped
 
   # API Gateway
   gateway:
@@ -66,7 +68,8 @@ services:
     ports:
       - 3000:3000
     volumes:
-      - ./gateway/src:/usr/src/app/src
+      - ./gateway:/usr/src/app
+      - /usr/src/app/node_modules
     environment:
       - PORT=${PORT_GATEWAY}
       - PRODUCTS_MICROSERVICE_HOST=${PRODUCTS_MICROSERVICE_HOST}
@@ -75,25 +78,26 @@ services:
       - ORDERS_MICROSERVICE_PORT=${ORDERS_MICROSERVICE_PORT}
       - NATS_SERVER=${NATS_SERVER}
     depends_on:
-      #- orders
-      #- products
+      - orders
+      - products
       - nats-server
     restart: unless-stopped
 
-  #payments:
-  #  build: ./payments
-  #  command: npm run start:dev
-  #  ports:
-  #    - 3003:3003
-  #  volumes:
-  #    - ./payments/src:/usr/src/app/src
-  #  environment:
-  #    - PORT=${PORT_PAYMENT}
-  #    - STRIPE_KEY=${STRIPE_KEY}
-  #    - NATS_SERVER=${NATS_SERVER}
-  #  depends_on:
-  #    - nats-server
-  #  restart: unless-stopped
+  payments:
+    build: ./payments
+    command: npm run start:dev
+    ports:
+      - 3003:3003
+    volumes:
+      - ./payments:/usr/src/app
+      - /usr/src/app/node_modules
+    environment:
+      - PORT=${PORT_PAYMENT}
+      - STRIPE_KEY=${STRIPE_KEY}
+      - NATS_SERVER=${NATS_SERVER}
+    depends_on:
+      - nats-server
+    restart: unless-stopped
 
   auth:
     build: ./auth
@@ -101,7 +105,8 @@ services:
     ports:
       - 3010:3010
     volumes:
-      - ./auth/src:/usr/src/app/src
+      - ./auth:/usr/src/app
+      - /usr/src/app/node_modules
     environment:
       - PORT=${PORT_AUTH}
       - NATS_SERVER=${NATS_SERVER}
