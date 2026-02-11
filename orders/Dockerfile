@@ -1,6 +1,6 @@
 FROM node:20-bullseye
 WORKDIR /usr/src/app
-COPY package.json ./
+COPY package.json package-lock.json* ./
 RUN npm install
 COPY . .
 
