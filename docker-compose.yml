@@ -43,7 +43,7 @@ services:
   # Microservicio de orders
   orders:
     build: ./orders
-    command: npm run start:dev
+    command: sh -c "npx prisma migrate deploy && npm run start:dev"
     ports:
       - 3002:3002
     volumes:
