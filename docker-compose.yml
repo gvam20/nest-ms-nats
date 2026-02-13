@@ -29,8 +29,7 @@ services:
     ports:
       - 3001:3001
     volumes:
-      - ./products:/usr/src/app
-      - /usr/src/app/node_modules
+      - ./products/src:/usr/src/app/src
     environment:
       - PORT=${PORT_PRODUCTS}
       - DATABASE_URL=${DATABASE_URL}
@@ -43,12 +42,13 @@ services:
   # Microservicio de orders
   orders:
     build: ./orders
-    command: sh -c "npx prisma migrate deploy && npm run start:dev"
+    env_file:
+      - ./orders/.env
+    command: npm run start:dev
     ports:
       - 3002:3002
     volumes:
-      - ./orders:/usr/src/app
-      - /usr/src/app/node_modules
+      - ./orders/src:/usr/src/app/src
     environment:
       - PORT=${PORT_ORDERS}
       - PRODUCTS_MICROSERVICE_HOST=${PRODUCTS_MICROSERVICE_HOST}
@@ -68,8 +68,7 @@ services:
     ports:
       - 3000:3000
     volumes:
-      - ./gateway:/usr/src/app
-      - /usr/src/app/node_modules
+      - ./gateway/src:/usr/src/app/src
     environment:
       - PORT=${PORT_GATEWAY}
       - PRODUCTS_MICROSERVICE_HOST=${PRODUCTS_MICROSERVICE_HOST}
@@ -89,8 +88,7 @@ services:
     ports:
       - 3003:3003
     volumes:
-      - ./payments:/usr/src/app
-      - /usr/src/app/node_modules
+      - ./payments/src:/usr/src/app/src
     environment:
       - PORT=${PORT_PAYMENT}
       - STRIPE_KEY=${STRIPE_KEY}
@@ -105,8 +103,7 @@ services:
     ports:
       - 3010:3010
     volumes:
-      - ./auth:/usr/src/app
-      - /usr/src/app/node_modules
+      - ./auth/src:/usr/src/app/src
     environment:
       - PORT=${PORT_AUTH}
       - NATS_SERVER=${NATS_SERVER}
